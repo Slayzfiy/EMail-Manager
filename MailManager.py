@@ -32,8 +32,8 @@ class Mail_manager:
         for ID in mail.search(None, 'ALL')[1][0].split():
             data = mail.fetch(ID, "(RFC822)")[1]
             email_message = emaila.message_from_string(data[0][1].decode("UTF-8"))
-            print(email_message)
             for payload in email_message.get_payload():
+                print(('From:\t', email_message['From']))
                 if ('From:\t', email_message['From']) == sender_filter:
                     if ('Subject:', email_message['Subject']) == subject_filter:
                         for part in email_message.walk():
