@@ -5,12 +5,15 @@ import concurrent.futures
 import json
 import random
 import string
+import MySQLdb
 
 
 class MailGenerator:
     def __init__(self):
-        pass
+        self.db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+        self.cursor = self.db.cursor()
 
+    @staticmethod
     def Fetch_Email(self):
         first_name = json.load(open("firstnames.json", "r"))
         last_name = json.load(open("lastnames.json", "r"))
@@ -21,15 +24,19 @@ class MailGenerator:
 
         return first_name + last_name + number + suffix
 
-    def Fetch_Password(self):
+    @staticmethod
+    def Fetch_Password():
         return ''.join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase) for i in
                        range(random.randint(10, 15)))
 
     def CreateEmail(self, URLS):
+        email = self.Fetch_Email()
+        password = self.Fetch_Password()
+
         r = requests.post("https://panel.dhosting.com/poczta/a/dodaj-skrzynke/", data={
             "sign_key": "nvwuaf14J6ddcuRVgJ05KJJa1x4=",
-            "adres_email": self.Fetch_Email(),
-            "password": self.Fetch_Password(),
+            "adres_email": email,
+            "password": password,
             "sms": "",
             "wartosc_wybrana": "2",
             "wartosc_wpisana": "2",
@@ -48,21 +55,28 @@ class MailGenerator:
             "dsid": "c4ed4afbfaad8d8e57db1514ffc1cce4",
             "login": "michaelpyth"
         })
+        data = [email, password]
+        self.Insert_data(data)
+        print(data)
 
+    def Insert_data(self, data):
+        self.cursor.execute(
+            "insert into 1swp_email_dhosting (Email, Password) values ('%s', '%s')" % (
+                data[0], data[1]))
+        self.db.commit()
 
-    def Products_With_Relevance(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-            # Start the load operations and mark each future with its URL
+    def Products_With_Relevance(self, account_to_create):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             URL = ['https://panel.dhosting.com/poczta/a/dodaj-skrzynke/']
-            future_to_url = {executor.submit(self.CreateEmail, URL): URL for x in range(100)}
+            future_to_url = {executor.submit(self.CreateEmail, URL): URL for x in range(account_to_create)}
             for future in concurrent.futures.as_completed(future_to_url):
                 url = future_to_url[future]
-                data = future.result()
+                try:
+                    data = future.result()
+                except Exception as ex:
+                    print(ex)
 
 
 if __name__ == '__main__':
     i = MailGenerator()
-    i.Products_With_Relevance()
-
-
-
+    i.Products_With_Relevance(account_to_create=1)
