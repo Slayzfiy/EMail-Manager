@@ -8,9 +8,12 @@ import urllib.request
 import pytesseract
 import cv2
 
+import datetime
 import MySQLdb
 import random
+import string
 import time
+import json
 import os
 
 
@@ -26,12 +29,18 @@ def fixCookies(driver):
 
 
 def getData():
-    cursor.execute(
-        "select Firstname, Lastname, Number, Email, Password, Musician from 1swp_email_account_templates order by Rand() limit 1")
-    data = cursor.fetchone()
-    print(data)
-    cursor.execute("delete from 1swp_email_account_templates where Email = '%s'" % data[3])
-    db.commit()
+    prefix = "@yandex.com"
+    firstnames = json.load(open("firstnames.json", "r"))
+    lastnames = json.load(open("lastnames.json", "r"))
+
+    firstname = firstnames[random.randint(0, 299)]
+    lastname = lastnames[random.randint(0, 299)].capitalize()
+    number = str(random.randint(100000, 999999))
+    email = "%s.%s%s%s" % (firstname, lastname, number, prefix)
+    musician = "%s %s" % (firstnames[random.randint(0, 299)], lastnames[random.randint(0, 299)].capitalize())
+    password = "".join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase) for i in
+                       range(random.randint(10, 15)))
+    data = [firstname, lastname, number, email, password, musician]
     return data
 
 
@@ -117,13 +126,12 @@ def login(driver):
 
 options = webdriver.ChromeOptions()
 options.add_argument("--headless")
-numAccounts = 5000
 
 driver = webdriver.Chrome("chromedriver.exe", options=options)
 driver.get("https://passport.yandex.com/registration")
 fixCookies(driver)
 driver.set_window_size(769, 899)
 
-for i in range(numAccounts):
+while True:
     driver.get("https://passport.yandex.com/registration")
     login(driver)
