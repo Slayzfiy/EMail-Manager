@@ -9,13 +9,22 @@ class Mail_manager:
         self.db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
         self.cursor = self.db.cursor()
 
-    def Fetch_Mail_Infos(self):
+    def Get_Emails(self):
         self.cursor.execute(
-            "select Email from 1swp_email_dhosting where Status = 'Waiting'")
+            "select Email from 1swp_eg_accounts where Status = 'Waiting'")
         data = []
         for line in self.cursor.fetchall():
             data.append(line[0])
         return data
+
+    def Save_Code(self, email, code, codetype):
+        self.cursor.execute("update 1swp_eg_accounts set %s = '%s', Status = 'Nothing' where Email = '%s'" % (codetype, code, email))
+        self.db.commit()
+
+    def  Get_Email_Password(self, email):
+        self.cursor.execute(
+            "select Password from 1swp_email_dhosting where Email = '%s'" % email)
+        return self.cursor.fetchone()[0]
 
     def Get_Code(self, email, password, codetype):
         code = ""
@@ -23,7 +32,6 @@ class Mail_manager:
         sender_filter = "Epic Games <help@acct.epicgames.com>"
         if codetype == 'verification':
             subject_filter = 'Epic Games - Email Verification'
-            code_filter_indicator = '\r\n</div>\r\n'
 
         elif codetype == '2fa':
             subject_filter = 'Your two-factor sign in code'
@@ -47,27 +55,16 @@ class Mail_manager:
         return code
 
 
-    def Save_Code(self, email, code, codetype):
-        self.cursor.execute("update 1swp_eg_accounts set %s = '%s' where Email = '%s'" % (codetype, code, email))
-        self.cursor.execute("update 1swp_email_dhosting set Status = 'Nothing' where Email = '%s'" % (email))
-        self.db.commit()
-
-
-    def  Get_Password(self, email):
-        self.cursor.execute(
-            "select Password from 1swp_email_dhosting where Email = '%s'" % email)
-        return self.cursor.fetchone()[0]
-
-
 if __name__ == "__main__":
     i = Mail_manager()
     while True:
-        for email in i.Fetch_Mail_Infos():
-            pw = i.Get_Password(email)
+        for email in i.Get_Emails():
+            pw = i.Get_Email_Password(email)
             print(email + ", " + pw)
             code = i.Get_Code(email, pw, 'verification')
             if code != "":
                 i.Save_Code(email, code, "Code1")
                 print("Saved Code %s for %s" % (code, email))
         time.sleep(5)
+        print("Waiting...")
 
