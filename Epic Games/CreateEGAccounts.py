@@ -9,50 +9,65 @@ import MySQLdb
 import random
 import time
 import json
-import re
+import string
 
 
 db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
 cursor = db.cursor()
 
 
-def getData():
+def getEmail():
     cursor.execute(
-        "select Firstname, Lastname, Email, Password from 1swp_email_accounts where HasGTAV = 0 limit 1")
-    data = cursor.fetchone()
-    return data
+        "select Email from 1swp_email_dhosting where HasGTAV = 'No' and Status = 'Nothing' limit 1")
+    return cursor.fetchone()
 
 
-def update(email):
+def insertAccount(data):
     cursor.execute(
-        "update 1swp_email_accounts set HasGTAV = 1 where Email = '%s'" % email)
+        "insert into 1swp_eg_accounts (Country, Firstname, Lastname, Username, Email, Password, Status) values('%s', '%s', '%s', '%s', '%s', '%s', 'Waiting')" % (
+        data[0], data[1], data[2], data[3], data[4], data[5]))
+    cursor.execute("update 1swp_email_dhosting set Status = 'Waiting' where Email = '%s'" % data[4])
     db.commit()
     return
 
 
 def getCountry():
-    return json.load(open("countries.json", "r"))["countries"][random.randint(0, 238)]["name"]
+    return json.load(open("countries.json", "r"))["countries"][random.randint(0, 228)]["name"]
+
+
+def getFirstname():
+    return json.load(open("firstnames.json", "r"))[random.randint(0, 299)]
+
+
+def getLastname():
+    return str(json.load(open("lastnames.json", "r"))[random.randint(0, 299)]).capitalize()
+
+
+def getUsername(firstname):
+    return firstname + "".join((str(random.randint(0, 9)) for i in range(15 - len(str(firstname)))))
+
+
+def getPassword():
+    return "".join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(15))
 
 
 class Registration:
     def __init__(self):
-        self.data = getData()
+        self.email = getEmail()[0]
 
         self.country = str(getCountry())
-        self.firstname = str(self.data[0])
-        self.lastname = str(''.join([i for i in self.data[1] if not i.isdigit()]))
-        self.username = self.getName()
-        self.email = self.data[2]
-        self.password = self.data[3]
+        self.firstname = str(getFirstname())
+        self.lastname = str(getLastname())
+        self.username = str(getUsername(self.firstname))
+        self.password = str(getPassword())
+
+        self.data = [self.country, self.firstname, self.lastname, self.username, self.email, self.password]
 
         self.options = webdriver.ChromeOptions()
         # self.options.add_argument("--headless")
         self.driver = webdriver.Chrome("chromedriver.exe", options=self.options)
         self.driver.set_window_size(769, 899)
-        pass
 
-    def getName(self):
-        return self.firstname + "".join((str(random.randint(0, 9)) for i in range(15 - len(str(self.firstname)))))
 
     def register(self):
         self.driver.get("https://www.epicgames.com/id/register")
@@ -65,13 +80,13 @@ class Registration:
         WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "termsOfService"))).click()
         WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "btn-submit"))).click()
 
-        print("email sent to %s" % (self.email))
+        print("email sent to %s" % self.email)
+        insertAccount(self.data)
 
         try:
             WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "code")))
         except:
             print("da")
-
 
 
 if __name__ == "__main__":

@@ -1,24 +1,24 @@
 import MySQLdb
 import imaplib
 import email as emaila
-from bs4 import BeautifulSoup
-import re
+import time
 
 
 class Mail_manager:
     def __init__(self):
-        pass
+        self.db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+        self.cursor = self.db.cursor()
 
     def Fetch_Mail_Infos(self):
-        db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
-        cursor = db.cursor()
-        cursor.execute(
-            "select Email, Password from 1swp_email_dhosting order by Rand() limit 1")
-        data = cursor.fetchone()
+        self.cursor.execute(
+            "select Email from 1swp_email_dhosting where Status = 'Waiting'")
+        data = []
+        for line in self.cursor.fetchall():
+            data.append(line[0])
         return data
 
-    def Fetch_Mails(self, email, password, codetype):
-
+    def Get_Code(self, email, password, codetype):
+        code = ""
         # filters to filter the mails
         sender_filter = "Epic Games <help@acct.epicgames.com>"
         if codetype == 'verification':
@@ -35,31 +35,39 @@ class Mail_manager:
         for ID in mail.search(None, 'ALL')[1][0].split():
             data = mail.fetch(ID, "(RFC822)")[1]
             email_message = emaila.message_from_string(data[0][1].decode("UTF-8"))
-            for payload in email_message.get_payload():
-                if (email_message['From']) == sender_filter:
-                    if (email_message['Subject']) == subject_filter:
-                        for part in email_message.walk():
-                            body = part.get_payload(decode=True)
-                            sourcecode = BeautifulSoup(str(body), "html.parser")
-                            #print(sourcecode)
-                            #code = re.search("^n[0-9]{6}", str(sourcecode))
+            if (email_message['From']) == sender_filter:
+                if (email_message['Subject']) == subject_filter:
+                    i = 0
+                    for part in email_message.walk():
+                        i += 1
+                        if i == 2:
+                            body = str(part.get_payload(decode=True)).replace("\\r", "").replace("\\n", "")
+                            temp = body.split('<div style="font-family: arial,helvetica,sans-serif; mso-line-height-rule: exactly; color:#313131; text-align: center; font-size: 50px; letter-spacing: 20px; line-height: 120px;">')[1]
+                            code = temp[:6]
+        return code
 
 
-
-                            ele = sourcecode.find_all('div', attrs={'style': 'font-family:arial,helvetica,sans-serif; color: '
-                                                                    '#313131;text-align: center;font-size: '
-                                                                    '50px;letter-spacing: 20px;line-height: 120px;'})
-git
-                            for x in ele:
-                                print(x.text)
+    def Save_Code(self, email, code, codetype):
+        self.cursor.execute("update 1swp_eg_accounts set %s = '%s' where Email = '%s'" % (codetype, code, email))
+        self.cursor.execute("update 1swp_email_dhosting set Status = 'Nothing' where Email = '%s'" % (email))
+        self.db.commit()
 
 
-                            #print(sourcecode[index:index+5])
+    def  Get_Password(self, email):
+        self.cursor.execute(
+            "select Password from 1swp_email_dhosting where Email = '%s'" % email)
+        return self.cursor.fetchone()[0]
 
 
 if __name__ == "__main__":
     i = Mail_manager()
-    # email, pw = i.Fetch_Mail_Infos()
-    # print(email, pw)
-    email, pw = 'JourneyOwen1377@dhosting.email', 'aLIgyFA3u6M'
-    i.Fetch_Mails(email, pw, 'verification')
+    while True:
+        for email in i.Fetch_Mail_Infos():
+            pw = i.Get_Password(email)
+            print(email + ", " + pw)
+            code = i.Get_Code(email, pw, 'verification')
+            if code != "":
+                i.Save_Code(email, code, "Code1")
+                print("Saved Code %s for %s" % (code, email))
+        time.sleep(5)
+
