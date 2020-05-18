@@ -15,10 +15,11 @@ class Mail_manager:
         data = []
         for line in self.cursor.fetchall():
             data.append(line[0])
+        self.db.commit()
         return data
 
     def Save_Code(self, email, code, codetype):
-        self.cursor.execute("update 1swp_eg_accounts set %s = '%s', Status = 'Nothing' where Email = '%s'" % (codetype, code, email))
+        self.cursor.execute("update 1swp_eg_accounts set %s = '%s' where Email = '%s'" % (codetype, code, email))
         self.db.commit()
 
     def  Get_Email_Password(self, email):
@@ -34,7 +35,7 @@ class Mail_manager:
             subject_filter = 'Epic Games - Email Verification'
 
         elif codetype == '2fa':
-            subject_filter = 'Your two-factor sign in code'
+            subject_filter = 'Dein Zwei-Faktor-Anmeldecode'
 
         mail = imaplib.IMAP4_SSL("imap.dhosting.com")
         mail.login(email, password)
@@ -48,9 +49,13 @@ class Mail_manager:
                     i = 0
                     for part in email_message.walk():
                         i += 1
-                        if i == 2:
+                        if i == 2 and codetype == "verification":
                             body = str(part.get_payload(decode=True)).replace("\\r", "").replace("\\n", "")
                             temp = body.split('<div style="font-family: arial,helvetica,sans-serif; mso-line-height-rule: exactly; color:#313131; text-align: center; font-size: 50px; letter-spacing: 20px; line-height: 120px;">')[1]
+                            code = temp[:6]
+                        elif i == 2 and codetype == "2fa":
+                            body = str(part.get_payload(decode=True)).replace("\\r", "").replace("\\n", "")
+                            temp = body.split('<div style="font-family: arial,helvetica,sans-serif; mso-line-height-rule: exactly; color:#313131; text-align: center; font-size: 40px; letter-spacing: 15px; line-height: 100px;">')[1]
                             code = temp[:6]
         return code
 
@@ -59,12 +64,20 @@ if __name__ == "__main__":
     i = Mail_manager()
     while True:
         for email in i.Get_Emails():
+            print("Checking Email %s" % email)
             pw = i.Get_Email_Password(email)
             print(email + ", " + pw)
-            code = i.Get_Code(email, pw, 'verification')
-            if code != "":
-                i.Save_Code(email, code, "Code1")
-                print("Saved Code %s for %s" % (code, email))
+
+            code1 = i.Get_Code(email, pw, 'verification')
+            if code1 != "":
+                i.Save_Code(email, code1, "Code1")
+                print("Saved Code1 %s for %s" % (code1, email))
+
+            code2 = i.Get_Code(email, pw, '2fa')
+            if code2 != "":
+                i.Save_Code(email, code2, "Code2")
+                print("Saved Code2 %s for %s" % (code2, email))
+
         time.sleep(5)
         print("Waiting...")
 

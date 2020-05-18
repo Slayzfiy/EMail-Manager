@@ -12,27 +12,43 @@ import json
 import string
 
 
-db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
-cursor = db.cursor()
-
-
 def getEmail():
+    db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+    cursor = db.cursor()
     cursor.execute(
-        "select Email from 1swp_email_dhosting where HasGTAV = 'No' and Status = 'Nothing' limit 1")
+        "select Email from 1swp_email_dhosting where GTAV = 'No' limit 1")
+    db.close()
     return cursor.fetchone()
 
 
 def insertAccount(data):
+    db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+    cursor = db.cursor()
     cursor.execute(
         "insert into 1swp_eg_accounts (Country, Firstname, Lastname, Username, Email, Password, Status) values('%s', '%s', '%s', '%s', '%s', '%s', 'Waiting')" % (
         data[0], data[1], data[2], data[3], data[4], data[5]))
-    cursor.execute("update 1swp_email_dhosting set Status = 'Waiting' where Email = '%s'" % data[4])
     db.commit()
+    db.close()
     return
 
 
-def getCountry():
-    return json.load(open("countries.json", "r"))["countries"][random.randint(0, 228)]["name"]
+def updateAccount(email, status):
+    db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+    cursor = db.cursor()
+    cursor.execute("update 1swp_eg_accounts set Status = '%s' where Email = '%s'" % (status, email))
+    db.commit()
+    db.close()
+    return
+
+
+def deleteAccount(email):
+    db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+    cursor = db.cursor()
+    cursor.execute("delete from 1swp_eg_accounts where Email = '%s'" % email)
+    cursor.execute("update 1swp_email_dhosting set GTAV = 'Failed' where Email = '%s'" % email)
+    db.commit()
+    db.close()
+    return
 
 
 def getFirstname():
@@ -48,51 +64,109 @@ def getUsername(firstname):
 
 
 def getPassword():
-    return "".join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(15))
+    return "".join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(14)) + "1"
+
+
+def getCode(email, type):
+    db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+    cursor = db.cursor()
+    cursor.execute(
+        "select %s from 1swp_eg_accounts where Email = '%s'" % (type, email))
+    db.close()
+    return cursor.fetchone()[0]
+
+
+def confirmAccount(email):
+    db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+    cursor = db.cursor()
+    cursor.execute(
+        "update 1swp_email_dhosting set GTAV = 'YES' where Email = '%s'" % email)
+    db.close()
 
 
 class Registration:
     def __init__(self):
         self.email = getEmail()[0]
 
-        self.country = str(getCountry())
+        self.country = "United States"
         self.firstname = str(getFirstname())
         self.lastname = str(getLastname())
         self.username = str(getUsername(self.firstname))
         self.password = str(getPassword())
-
         self.data = [self.country, self.firstname, self.lastname, self.username, self.email, self.password]
 
-        self.options = webdriver.ChromeOptions()
-        # self.options.add_argument("--headless")
-        self.driver = webdriver.Chrome("chromedriver.exe", options=self.options)
-        self.driver.set_window_size(769, 899)
-
-
     def register(self):
-        self.driver.get("https://www.epicgames.com/id/register")
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "react-select-2-input"))).send_keys(self.country + Keys.ENTER)
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "name"))).send_keys(self.firstname)
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "lastName"))).send_keys(self.lastname)
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "displayName"))).send_keys(self.username)
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "email"))).send_keys(self.email)
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "password"))).send_keys(self.password)
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "termsOfService"))).click()
-        WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "btn-submit"))).click()
-
-        print("email sent to %s" % self.email)
-        insertAccount(self.data)
+        options = webdriver.ChromeOptions()
+        driver = webdriver.Chrome("chromedriver.exe", options=options)
+        driver.get("https://www.epicgames.com/id/register")
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "react-select-2-input"))).send_keys(self.country + Keys.ENTER)
+        time.sleep(1)
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "name"))).send_keys(self.firstname)
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "lastName"))).send_keys(self.lastname)
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "displayName"))).send_keys(self.username)
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "email"))).send_keys(self.email)
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "password"))).send_keys(self.password)
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "termsOfService"))).click()
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "btn-submit"))).click()
 
         try:
-            WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.ID, "code")))
+            codeElement = WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "code")))
         except:
-            print("da")
+            print("%s crashed because of CAPTCHA." % self.email)
+            driver.close()
+            return "ERROR_CAPTCHA"
+        try:
+            insertAccount(self.data)
+            print("Email sent to %s" % self.email)
+            code = ""
+            while code == "":
+                code = str(getCode(self.email, "Code1"))
+                time.sleep(2)
+
+            updateAccount(self.email, "Nothing")
+            codeElement.send_keys(str(code))
+
+            driver.find_element_by_id("continue").click()
+            time.sleep(5)
+            driver.get("https://www.epicgames.com/account/password?from=webPDP&lang=de#2fa-signup")
+            codeElement = ""
+            while codeElement == "":
+                try:
+                    WebDriverWait(driver, 3).until(ec.presence_of_element_located(
+                        (By.XPATH, "//button[contains(text(), 'Authentifizierung per E-Mail aktivieren')]"))).click()
+                    codeElement = WebDriverWait(driver, 2).until(ec.presence_of_element_located((By.NAME, "challengeEmailCode")))
+                except:
+                    pass
+            codeElement.click()
+            updateAccount(self.email, "Waiting")
+            code = ""
+            while code == "":
+                code = str(getCode(self.email, "Code2"))
+                time.sleep(1)
+            codeElement.send_keys(str(code))
+            updateAccount(email, "Nothing")
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'fortfahren')]"))).click()
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Fertig')]"))).click()
+            driver.get("https://www.epicgames.com/store/de/product/grand-theft-auto-v/home")
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Fortfahren')]"))).click()
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Holen')]"))).click()
+            time.sleep(4)
+            driver.execute_script('document.getElementsByClassName("btn btn-primary")[0].click()')
+            print("Account %s finished. Restarting now." % self.email)
+            time.sleep(5)
+            driver.close()
+            return "SUCCESS"
+        except Exception as e:
+            print("Crashed because of: " + str(e))
+            deleteAccount(self.email)
+            driver.close()
 
 
 if __name__ == "__main__":
-    numAccounts = 1
+    numAccounts = 10
 
     for i in range(numAccounts):
         reg = Registration()
-        reg.register()
-        time.sleep(1000)
+        errorCode = ""
+        while errorCode != "SUCCESS":
+            errorCode = reg.register()
