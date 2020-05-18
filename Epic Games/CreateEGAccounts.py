@@ -97,7 +97,9 @@ class Registration:
 
     def register(self):
         options = webdriver.ChromeOptions()
+        #options.add_argument("--headless")
         driver = webdriver.Chrome("chromedriver.exe", options=options)
+        driver.set_window_size(500, 980)
         driver.get("https://www.epicgames.com/id/register")
         WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, "react-select-2-input"))).send_keys(self.country + Keys.ENTER)
         time.sleep(1)
@@ -144,7 +146,7 @@ class Registration:
                 code = str(getCode(self.email, "Code2"))
                 time.sleep(1)
             codeElement.send_keys(str(code))
-            updateAccount(email, "Nothing")
+            updateAccount(self.email, "Nothing")
             WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'fortfahren')]"))).click()
             WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Fertig')]"))).click()
             driver.get("https://www.epicgames.com/store/de/product/grand-theft-auto-v/home")
@@ -153,7 +155,14 @@ class Registration:
             time.sleep(4)
             driver.execute_script('document.getElementsByClassName("btn btn-primary")[0].click()')
             print("Account %s finished. Restarting now." % self.email)
-            time.sleep(5)
+            time.sleep(3)
+            driver.get("https://www.epicgames.com/account/password")
+            WebDriverWait(driver, 3).until(ec.presence_of_element_located(
+                (By.XPATH, "//button[contains(text(), 'Authentifizierung per E-Mail deaktivieren')]"))).click()
+            time.sleep(1)
+            WebDriverWait(driver, 5).until(ec.presence_of_element_located(
+                (By.XPATH, "//button[contains(text(), 'Fortfahren')]"))).click()
+            time.sleep(3)
             driver.close()
             return "SUCCESS"
         except Exception as e:
