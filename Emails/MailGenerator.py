@@ -1,9 +1,9 @@
 import requests
-import concurrent.futures
-import json
-import random
-import string
 import MySQLdb
+import string
+import random
+import time
+import json
 
 
 class MailGenerator:
@@ -12,7 +12,7 @@ class MailGenerator:
         self.cursor = self.db.cursor()
 
     @staticmethod
-    def Fetch_Email():
+    def GenerateEmail():
         first_name = json.load(open("firstnames.json", "r"))
         last_name = json.load(open("lastnames.json", "r"))
         first_name = first_name[random.randint(0, 299)]
@@ -20,27 +20,29 @@ class MailGenerator:
         number = str(random.randint(500, 2000))
         suffix = '@dhosting.email'
 
-        return first_name + last_name + number + suffix
+        return first_name + "." + last_name + number + suffix
 
     @staticmethod
-    def Fetch_Password():
+    def GeneratePassword():
         return ''.join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase) for i in
                        range(random.randint(10, 15)))
 
-    def Insert_data(self, data):
+    @staticmethod
+    def CheckResponse(text):
+        return text.split(', {"komunikaty":[')[1][1:32] == "E-mail account has been created"
+
+    def InsertData(self, data):
         self.cursor.execute(
             "insert into 1swp_email_dhosting (Email, Password) values ('%s', '%s')" % (
                 data[0], data[1]))
         self.db.commit()
 
-    def CreateMailsTemplate(self, URLS):
-        email = self.Fetch_Email()
-        password = self.Fetch_Password()
-
+    def CreateEmailAccount(self):
+        data = [self.GenerateEmail(), self.GeneratePassword()]
         r = requests.post("https://panel.dhosting.com/poczta/a/dodaj-skrzynke/", data={
             "sign_key": "nvwuaf14J6ddcuRVgJ05KJJa1x4=",
-            "adres_email": email,
-            "password": password,
+            "adres_email": data[0],
+            "password": data[1],
             "sms": "",
             "wartosc_wybrana": "2",
             "wartosc_wpisana": "2",
@@ -59,22 +61,20 @@ class MailGenerator:
             "dsid": "bd0404d5f3a7c7badf7e06a42e3920f2",
             "login": "michaelpyth"
         })
-        data = [email, password]
-        self.Insert_data(data)
-        print(data)
+        if self.CheckResponse(r.text):
+            self.InsertData(data)
+            print("Added: " + str(data))
+            return True
+        else:
+            print("Failed: " + str(data))
+            return False
 
-    def Create_Mails(self, account_to_create):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-            URL = ['https://panel.dhosting.com/poczta/a/dodaj-skrzynke/']
-            future_to_url = {executor.submit(self.CreateMailsTemplate, URL): URL for x in range(account_to_create)}
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    data = future.result()
-                except Exception as ex:
-                    print(ex)
+    def CreateEmails(self, accounts_to_create):
+            for i in range(accounts_to_create):
+                while not self.CreateEmailAccount():
+                    pass
 
 
 if __name__ == '__main__':
     i = MailGenerator()
-    i.Create_Mails(account_to_create=100)
+    i.CreateEmails(accounts_to_create=100)
