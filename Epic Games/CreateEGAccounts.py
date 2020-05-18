@@ -98,6 +98,7 @@ class Registration:
     def register(self):
         options = webdriver.ChromeOptions()
         #options.add_argument("--headless")
+        #options.add_argument("user-data-dir=C:/Users/micha/AppData/Local/Google/Chrome/User Data/Default")
         driver = webdriver.Chrome("chromedriver.exe", options=options)
         driver.set_window_size(500, 980)
         driver.get("https://www.epicgames.com/id/register")
