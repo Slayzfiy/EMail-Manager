@@ -4,7 +4,7 @@ import email as emaila
 import time
 
 
-class Mail_manager:
+class MailManager:
     def __init__(self):
         self.db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
         self.cursor = self.db.cursor()
@@ -22,7 +22,7 @@ class Mail_manager:
         self.cursor.execute("update 1swp_eg_accounts set %s = '%s' where Email = '%s'" % (codetype, code, email))
         self.db.commit()
 
-    def  Get_Email_Password(self, email):
+    def Get_Email_Password(self, email):
         self.cursor.execute(
             "select Password from 1swp_email_dhosting where Email = '%s'" % email)
         return self.cursor.fetchone()[0]

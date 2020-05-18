@@ -12,7 +12,7 @@ class MailGenerator:
         self.cursor = self.db.cursor()
 
     @staticmethod
-    def Fetch_Email(self):
+    def Fetch_Email():
         first_name = json.load(open("firstnames.json", "r"))
         last_name = json.load(open("lastnames.json", "r"))
         first_name = first_name[random.randint(0, 299)]
@@ -27,7 +27,13 @@ class MailGenerator:
         return ''.join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase) for i in
                        range(random.randint(10, 15)))
 
-    def CreateEmail(self, URLS):
+    def Insert_data(self, data):
+        self.cursor.execute(
+            "insert into 1swp_email_dhosting (Email, Password) values ('%s', '%s')" % (
+                data[0], data[1]))
+        self.db.commit()
+
+    def CreateMailsTemplate(self, URLS):
         email = self.Fetch_Email()
         password = self.Fetch_Password()
 
@@ -50,23 +56,17 @@ class MailGenerator:
             "src_login": "",
             "src_haslo": ""
         }, cookies={
-            "dsid": "c4ed4afbfaad8d8e57db1514ffc1cce4",
+            "dsid": "bd0404d5f3a7c7badf7e06a42e3920f2",
             "login": "michaelpyth"
         })
         data = [email, password]
         self.Insert_data(data)
         print(data)
 
-    def Insert_data(self, data):
-        self.cursor.execute(
-            "insert into 1swp_email_dhosting (Email, Password) values ('%s', '%s')" % (
-                data[0], data[1]))
-        self.db.commit()
-
-    def Products_With_Relevance(self, account_to_create):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+    def Create_Mails(self, account_to_create):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
             URL = ['https://panel.dhosting.com/poczta/a/dodaj-skrzynke/']
-            future_to_url = {executor.submit(self.CreateEmail, URL): URL for x in range(account_to_create)}
+            future_to_url = {executor.submit(self.CreateMailsTemplate, URL): URL for x in range(account_to_create)}
             for future in concurrent.futures.as_completed(future_to_url):
                 url = future_to_url[future]
                 try:
@@ -77,4 +77,4 @@ class MailGenerator:
 
 if __name__ == '__main__':
     i = MailGenerator()
-    i.Products_With_Relevance(account_to_create=1)
+    i.Create_Mails(account_to_create=100)
