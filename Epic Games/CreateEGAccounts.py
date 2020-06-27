@@ -95,10 +95,13 @@ class Registration:
         self.password = str(getPassword())
         self.data = [self.country, self.firstname, self.lastname, self.username, self.email, self.password]
 
+    def solveCaptcha(self):
+        pass
+
     def register(self):
         options = webdriver.ChromeOptions()
         #options.add_argument("--headless")
-        #options.add_argument("user-data-dir=C:/Users/micha/AppData/Local/Google/Chrome/User Data/Default")
+        options.add_argument("user-data-dir=C:/Users/micha/AppData/Local/Google/Chrome/User Data/Default")
         driver = webdriver.Chrome("chromedriver.exe", options=options)
         driver.set_window_size(500, 980)
         driver.get("https://www.epicgames.com/id/register")
@@ -135,6 +138,8 @@ class Registration:
             codeElement = ""
             while codeElement == "":
                 try:
+                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    time.sleep(0.5)
                     WebDriverWait(driver, 3).until(ec.presence_of_element_located(
                         (By.XPATH, "//button[contains(text(), 'Authentifizierung per E-Mail aktivieren')]"))).click()
                     codeElement = WebDriverWait(driver, 2).until(ec.presence_of_element_located((By.NAME, "challengeEmailCode")))
@@ -151,7 +156,9 @@ class Registration:
             WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'fortfahren')]"))).click()
             WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Fertig')]"))).click()
             driver.get("https://www.epicgames.com/store/de/product/grand-theft-auto-v/home")
+            time.sleep(100)
             WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Fortfahren')]"))).click()
+            time.sleep(1)
             WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Holen')]"))).click()
             time.sleep(4)
             driver.execute_script('document.getElementsByClassName("btn btn-primary")[0].click()')
@@ -176,7 +183,7 @@ if __name__ == "__main__":
     numAccounts = 10
 
     for i in range(numAccounts):
-        reg = Registration()
         errorCode = ""
         while errorCode != "SUCCESS":
+            reg = Registration()
             errorCode = reg.register()

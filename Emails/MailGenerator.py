@@ -18,6 +18,7 @@ class MailGenerator:
             name = str(self.ig.GenerateFirstname()).lower() + str(self.ig.GenerateRandomNumber())
         email = self.ig.GenerateEmail("@gmail.com")
         password = self.ig.GeneratePassword()
+
         requests.post("https://dhosting.com/registration/koszyk.html", data={
             "_action": "dodajWyswietl", "RodzajUslugi": "glowna", "Operacja": "rejestracja",
              "NazwaWewnetrzna": "elastic", "Promocje[0][NazwaWewnetrzna]": "domena_za_1_zl",
@@ -40,12 +41,12 @@ class MailGenerator:
              "PHPSESSID": "bf798196ae9e4b246602b174d37c6668"
         }).text
 
-        print(f"Creating account: Email: {email}\nName: {name}\nPassword: {password}")
+        #print(f"Creating account: Email: {email}\nName: {name}\nPassword: {password}")
         if json.loads(response)["Success"]:
             self.sqlManager.insertData("dhosting_host_accounts", "(Email, Name, Password)", [email, name, password])
             print("Account created")
-        else:
-            print(response)
+        #else:
+            #print(response)
 
     def GenerateEmail(self):
         firstname = self.firstnames[random.randint(0, 299)]
@@ -53,47 +54,8 @@ class MailGenerator:
         number = str(random.randint(10000, 99999))
         return firstname + "." + lastname + number + self.suffix
 
-    @staticmethod
-    def GeneratePassword():
-        return ''.join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase)
-                       for i in range(random.randint(10, 15)))
-
-    @staticmethod
-    def CheckResponse(text):
-        return text.split(', {"komunikaty":[')[1][1:32] == "E-mail account has been created"
-
     def CreateEmailAccount(self):
-        data = [self.GenerateEmail(), self.GeneratePassword()]
-        r = requests.post("https://panel.dhosting.com/poczta/a/dodaj-skrzynke/", data={
-            "sign_key": "nvwuaf14J6ddcuRVgJ05KJJa1x4=",
-            "adres_email": data[0],
-            "password": data[1],
-            "sms": "",
-            "wartosc_wybrana": "2",
-            "wartosc_wpisana": "2",
-            "typ": [
-                "brak",
-                ""
-            ],
-            "filtr[spamassassin]": "T",
-            "filtr[spf]": "T",
-            "filtr[rbl]": "T",
-            "wyszukiwarka_aliasow": "",
-            "src_host": "",
-            "src_login": "",
-            "src_haslo": ""
-        }, cookies={
-            "dsid": "bd0404d5f3a7c7badf7e06a42e3920f2",
-            "login": "michaelpyth"
-        })
-        
-        if self.CheckResponse(r.text):
-            self.sqlManager.insertData("1swp_email_dhosting", "(Email, Password)", data)
-            print("Added: " + str(data))
-            return True
-        else:
-            print("Failed: " + str(data))
-            return False
+        pass
 
     def CreateEmails(self, accounts_to_create):
             for i in range(accounts_to_create):
