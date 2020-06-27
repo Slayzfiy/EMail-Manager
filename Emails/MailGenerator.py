@@ -1,41 +1,56 @@
+from Emails.InfoGenerator import InfoGenerator as ig
+from Emails.SQLManager import MySQLManager as sql
 import requests
-import MySQLdb
 import string
 import random
-import time
 import json
 
 
 class MailGenerator:
     def __init__(self):
-        self.db = MySQLdb.connect("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
-        self.cursor = self.db.cursor()
+        self.suffix = "@dhosting.email"
+        self.sqlManager = sql("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
+        self.ig = ig("firstnames.json", "lastnames.json", 5)
 
-    @staticmethod
-    def GenerateEmail():
-        first_name = json.load(open("firstnames.json", "r"))
-        last_name = json.load(open("lastnames.json", "r"))
-        first_name = first_name[random.randint(0, 299)]
-        last_name = last_name[random.randint(0, 299)].capitalize()
-        number = str(random.randint(500, 2000))
-        suffix = '@dhosting.email'
+    def CreateHostAccount(self):
+        name = str(self.ig.GenerateFirstname()).lower() + str(self.ig.GenerateRandomNumber())
+        email = self.ig.GenerateEmail("@gmail.com")
+        password = self.ig.GeneratePassword()
+        response = requests.post("https://dhosting.com/registration/zamowienie2.html", data={
+            "_action": "wyslij",
+            "name": "",
+            "dPanelLogin": name,
+            "dPanelHaslo": password,
+            "email": email,
+            "zgodaDane": "T"
+        }, cookies={
+            "__cfduid": "da5234fc225d2d50368c22df423e909ad1593261478", "_fbp": "fb.1.1589747381705.1402120430",
+             "_ga": "GA1.2.1888593612.1589747381", "_gid": "GA1.2.805262201.1593261477",
+             "_hp2_id.1791626420": "{\"userId\":\"4101857338373244\",\"pageviewId\":\"1580577024557633\",\"sessionId\":\"195713887124829\",\"identity\":null,\"trackerVersion\":\"4.0\"}",
+             "_hp2_ses_props.1791626420": "{\"r\":\"https://panel.dhosting.com/poczta/v/lista/\",\"ts\":1593285737875,\"d\":\"panel.dhosting.com\",\"h\":\"/billing/v/lista/wszystkie/\"}",
+             "PHPSESSID": "3f2dd2beb224d1e5a4c0d5df938eb3b8"
+        }).text
 
-        return first_name + "." + last_name + number + suffix
+        print(f"Creating account: Email: {email}\nName: {name}\nPassword: {password}")
+        if json.loads(response)["Success"] == "true":
+            self.sqlManager.insertData("dhosting_host_accounts", "(Email, Name, Password)", [email, name, password])
+        else:
+            print(response)
+
+    def GenerateEmail(self):
+        firstname = self.firstnames[random.randint(0, 299)]
+        lastname = self.lastNames[random.randint(0, 299)].capitalize()
+        number = str(random.randint(10000, 99999))
+        return firstname + "." + lastname + number + self.suffix
 
     @staticmethod
     def GeneratePassword():
-        return ''.join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase) for i in
-                       range(random.randint(10, 15)))
+        return ''.join(random.choice(string.ascii_lowercase + string.digits + string.ascii_uppercase)
+                       for i in range(random.randint(10, 15)))
 
     @staticmethod
     def CheckResponse(text):
         return text.split(', {"komunikaty":[')[1][1:32] == "E-mail account has been created"
-
-    def InsertData(self, data):
-        self.cursor.execute(
-            "insert into 1swp_email_dhosting (Email, Password) values ('%s', '%s')" % (
-                data[0], data[1]))
-        self.db.commit()
 
     def CreateEmailAccount(self):
         data = [self.GenerateEmail(), self.GeneratePassword()]
@@ -61,8 +76,9 @@ class MailGenerator:
             "dsid": "bd0404d5f3a7c7badf7e06a42e3920f2",
             "login": "michaelpyth"
         })
+        
         if self.CheckResponse(r.text):
-            self.InsertData(data)
+            self.sqlManager.insertData("1swp_email_dhosting", "(Email, Password)", data)
             print("Added: " + str(data))
             return True
         else:
@@ -77,4 +93,4 @@ class MailGenerator:
 
 if __name__ == '__main__':
     i = MailGenerator()
-    i.CreateEmails(accounts_to_create=100)
+    i.CreateHostAccount()
