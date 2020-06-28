@@ -1,5 +1,6 @@
 from Emails.InfoGenerator import InfoGenerator as ig
 from Emails.SQLManager import MySQLManager as sql
+from bs4 import BeautifulSoup
 import requests
 import json
 import time
@@ -40,15 +41,12 @@ class MailGenerator:
              "PHPSESSID": "bf798196ae9e4b246602b174d37c6668"
         }).text
 
-        #print(f"Creating account: Email: {email}\nName: {name}\nPassword: {password}")
         if json.loads(response)["Success"]:
             self.sqlManager.insertData("dhosting_host_accounts", "(Email, Name, Password)", [email, name, password])
-            print("Account created")
-        #else:
-            #print(response)
+            print(f"Host-Account created ({email}).")
 
     def GetLatestHostAccount(self):
-        return self.sqlManager.getData("dhosting_host_accounts", "Email, Name, Password", "WHERE TIMESTAMPADD(Day, 12, Created) > now() order By Created desc limit 1")[0]
+        return self.sqlManager.getData("dhosting_host_accounts", "Name", "order By Created desc limit 1")[0]
 
     def GetdsID(self, account):
         r = requests.post("https://panel.dhosting.com/", data={
@@ -58,16 +56,13 @@ class MailGenerator:
         })
         return r.cookies["dsid"]
 
-    def CreateEmailAccount(self):
-        hostAccount = self.GetLatestHostAccount()
-        emailAccount = [self.ig.GenerateEmail("@dhosting.email"), self.ig.GeneratePassword()]
-        print(f"Using Email: {hostAccount[0]}\nName: {hostAccount[1]}\nPassword: {hostAccount[2]}")
-        dsid = self.GetdsID(hostAccount)
-
+    @staticmethod
+    def SendCreateRequest(email, password, dsid, hostName):
+        print(f"Creating Email-Account ({email}) using Host: {hostName}")
         requests.post("https://panel.dhosting.com/poczta/a/dodaj-skrzynke/", data={
             "sign_key": "nvwuaf14J6ddcuRVgJ05KJJa1x4=",
-            "adres_email": emailAccount[0],
-            "password": emailAccount[1],
+            "adres_email": email,
+            "password": password,
             "sms": "",
             "wartosc_wybrana": "2",
             "wartosc_wpisana": "2",
@@ -75,46 +70,49 @@ class MailGenerator:
                 [
                     "wlasny",
                     ""
-                 ],
+                ],
             "wyszukiwarka_aliasow": "",
             "src_host": "",
             "src_login": "",
             "src_haslo": ""
         }, cookies={
             "dsid": dsid,
-            "login": hostAccount[1],
+            "login": hostName,
         })
-        self.sqlManager.insertData("dhosting_email_accounts", "(Email, Password)", emailAccount)
 
-    def GetAllEmailAccounts(self):
-        return self.sqlManager.getData("dhosting_email_accounts", "Email, Password")
+    def CreateEmailAccount(self, hostAccount, dsid):
+        emailAccount = [self.ig.GenerateEmail("@dhosting.email"), self.ig.GeneratePassword()]
+        self.SendCreateRequest(emailAccount[0], emailAccount[1], dsid, hostAccount)
+        self.sqlManager.insertData("dhosting_email_accounts", "(Email, Password)", emailAccount)
 
     def DeleteEmailAccounts(self):
         hostAccount = self.GetLatestHostAccount()
         dsid = self.GetdsID(hostAccount)
-        for account in self.GetAllEmailAccounts():
+        for account in self.sqlManager.getData("dhosting_email_accounts", "Email, Password"):
             r = requests.get(f"https://panel.dhosting.com/poczta/jv/form-usun-adres/{account[0]}/", cookies={
                 "dsid": dsid,
                 "login": hostAccount[1],
             })
+
             first = r.text.split('<input type="hidden" name="')[1].split('" value="')[0]
             second = r.text.split(f'<input type="hidden" name="{first}" value="')[1].split('" />')[0]
-            r = requests.post("https://panel.dhosting.com/poczta/a/usun-adres//", data={
+            requests.post("https://panel.dhosting.com/poczta/a/usun-adres//", data={
                 first: second
             }, cookies={
                 "dsid": dsid,
                 "login": hostAccount[1],
             })
-            self.sqlManager.deleteData("dhosting_email_accounts", f"where Email = '{account[0]}'")
             print(f"Deleted {account[0]}")
 
 
 if __name__ == '__main__':
-    mode = "c"
-    i = MailGenerator()
+    mode = "d"
+    generator = MailGenerator()
     if mode == "c":
+        hostAccount = generator.GetLatestHostAccount()
+        dsid = generator.GetdsID(hostAccount)
         for index in range(10):
-            i.CreateEmailAccount()
+            generator.CreateEmailAccount(hostAccount, dsid)
             time.sleep(3)
     elif mode == "d":
-        i.DeleteEmailAccounts()
+        generator.DeleteEmailAccounts()

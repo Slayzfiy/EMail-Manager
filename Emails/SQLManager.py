@@ -15,17 +15,24 @@ class MySQLManager:
         self.connection.commit()
 
     def updateData(self, table, datafield, value, condition):
+        self.cursor = self.connection.cursor()
         self.cursor.execute(f"update {table} set {datafield} = '{value}' {condition}")
         self.connection.commit()
 
     def getData(self, table, datafields, condition=""):
+        self.cursor = self.connection.cursor()
         self.cursor.execute(f"select {datafields} from {table} {condition}")
+
+        if "limit 1" in condition:
+            return self.cursor.fetchone()
         return self.cursor.fetchall()
 
     def dataExists(self, table, condition):
+        self.cursor = self.connection.cursor()
         self.cursor.execute(f"select * from {table} {condition}")
         return len(self.cursor.fetchall()) > 0
 
     def deleteData(self, table, condition):
+        self.cursor = self.connection.cursor()
         self.cursor.execute(f"delete from {table} {condition}")
         self.connection.commit()
