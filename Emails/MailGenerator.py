@@ -48,11 +48,11 @@ class MailGenerator:
     def GetLatestHostAccount(self):
         return self.sqlManager.getData("dhosting_host_accounts", "Name", "order By Created desc limit 1")[0]
 
-    def GetdsID(self, account):
+    def GetdsID(self, accountName, accountPassword):
         r = requests.post("https://panel.dhosting.com/", data={
             "logowanie": "true",
-            "logowanie_username": account[1],
-            "logowanie_password": account[2]
+            "logowanie_username": accountName,
+            "logowanie_password": accountPassword
         })
         return r.cookies["dsid"]
 
