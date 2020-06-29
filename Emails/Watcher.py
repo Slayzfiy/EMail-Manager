@@ -9,7 +9,7 @@ class Watcher:
         self.mailGenerator = generator()
 
     def HostTooOld(self):
-        return not self.sqlManager.dataExists("dhosting_host_accounts", "WHERE TIMESTAMPADD(Hour, 1, Created) > now() order By Created desc limit 1")
+        return not self.sqlManager.dataExists("dhosting_host_accounts", "WHERE TIMESTAMPADD(Day, 12, Created) > now() order By Created desc limit 1")
 
     def RefreshHost(self):
         self.mailGenerator.DeleteEmailAccounts()
