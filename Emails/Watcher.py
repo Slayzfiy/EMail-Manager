@@ -16,8 +16,9 @@ class Watcher:
 
         self.mailGenerator.CreateHostAccount()
         time.sleep(10)
-        hostAccount = self.mailGenerator.GetLatestHostAccount()
-        dsid = self.mailGenerator.GetdsID(hostAccount)
+        hostAccount = self.mailGenerator.GetLatestHostAccount()[0]
+        hostPassword = self.mailGenerator.GetLatestHostAccount()[1]
+        dsid = self.mailGenerator.GetdsID(hostAccount, hostPassword)
         for account in self.sqlManager.getData("dhosting_email_accounts", "Email, Password"):
             self.mailGenerator.SendCreateRequest(account[0], account[1], dsid, hostAccount)
             time.sleep(5)
@@ -32,11 +33,11 @@ class Watcher:
                     if self.HostTooOld():
                         print("Host is too old, creating a new one!")
                         self.RefreshHost()
-                    elif emailAccounts < 1000:
-                        hostName = self.mailGenerator.GetLatestHostAccount()
-                        hostPassword = self.sqlManager.getData("dhosting_host_accounts", "(Password)", f"where Name ='{hostName}'")
+                    elif emailAccounts < 10000:
+                        hostName = self.mailGenerator.GetLatestHostAccount()[0]
+                        hostPassword = self.mailGenerator.GetLatestHostAccount()[1]
                         dsid = self.mailGenerator.GetdsID(hostName, hostPassword)
-                        for i in range(1000 - emailAccounts):
+                        for i in range(10000 - emailAccounts):
                             self.mailGenerator.CreateEmailAccount(hostName, dsid)
                             time.sleep(5)
                             print("Created Account.")

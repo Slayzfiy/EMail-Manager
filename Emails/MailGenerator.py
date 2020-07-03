@@ -46,7 +46,7 @@ class MailGenerator:
             print(f"Host-Account created ({email}).")
 
     def GetLatestHostAccount(self):
-        return self.sqlManager.getData("dhosting_host_accounts", "Name", "order By Created desc limit 1")[0]
+        return self.sqlManager.getData("dhosting_host_accounts", "Name, Password", "order By Created desc limit 1")[0]
 
     def GetdsID(self, accountName, accountPassword):
         r = requests.post("https://panel.dhosting.com/", data={
@@ -86,12 +86,13 @@ class MailGenerator:
         self.sqlManager.insertData("dhosting_email_accounts", "(Email, Password)", emailAccount)
 
     def DeleteEmailAccounts(self):
-        hostAccount = self.GetLatestHostAccount()
-        dsid = self.GetdsID(hostAccount)
+        hostAccount = self.GetLatestHostAccount()[0]
+        hostPassword = self.GetLatestHostAccount()[1]
+        dsid = self.GetdsID(hostAccount, hostPassword)
         for account in self.sqlManager.getData("dhosting_email_accounts", "Email, Password"):
             r = requests.get(f"https://panel.dhosting.com/poczta/jv/form-usun-adres/{account[0]}/", cookies={
                 "dsid": dsid,
-                "login": hostAccount[1],
+                "login": hostAccount,
             })
 
             first = r.text.split('<input type="hidden" name="')[1].split('" value="')[0]
@@ -100,7 +101,7 @@ class MailGenerator:
                 first: second
             }, cookies={
                 "dsid": dsid,
-                "login": hostAccount[1],
+                "login": hostAccount,
             })
             print(f"Deleted {account[0]}")
 
@@ -110,7 +111,8 @@ if __name__ == '__main__':
     generator = MailGenerator()
     if mode == "c":
         hostAccount = generator.GetLatestHostAccount()
-        dsid = generator.GetdsID(hostAccount)
+        hostPassword = generator.GetLatestHostAccount()
+        dsid = generator.GetdsID(hostAccount, hostPassword)
         for index in range(10):
             generator.CreateEmailAccount(hostAccount, dsid)
             time.sleep(3)

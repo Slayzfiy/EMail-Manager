@@ -22,9 +22,6 @@ class MySQLManager:
     def getData(self, table, datafields, condition=""):
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"select {datafields} from {table} {condition}")
-
-        if "limit 1" in condition:
-            return self.cursor.fetchone()
         return self.cursor.fetchall()
 
     def dataExists(self, table, condition):
