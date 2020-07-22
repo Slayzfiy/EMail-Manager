@@ -41,10 +41,10 @@ class Gleam:
 
     def Clear(self):
         self.driver.delete_all_cookies()
-        #if len(self.driver.window_handles) > 1:
-        #    self.driver.switch_to.window(self.driver.window_handles[1])
-        #    self.driver.close()
-        #    self.driver.switch_to.window(self.driver.window_handles[0])
+        if len(self.driver.window_handles) > 1:
+            self.driver.switch_to.window(self.driver.window_handles[1])
+            self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[0])
 
 
 if __name__ == "__main__":
@@ -54,8 +54,10 @@ if __name__ == "__main__":
     giveaway = gm.GetOpenGiveaways()[0]
     url = giveaway[1]
     id = giveaway[0]
+    counter = 1
     for tempEmail in gm.GetMissingEmails(1):
         email = tempEmail[0]
         if gleam.Start(email, url):
-            print("Successfull")
+            print("Successfull (%s)" % counter)
             gm.EnterEmailAccount(email, id)
+            counter += 1

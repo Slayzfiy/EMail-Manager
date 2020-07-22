@@ -8,8 +8,12 @@ class Watcher:
         self.sqlManager = sql("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
         self.mailGenerator = generator()
 
+        #Config
+        self.emailAmmount = 1000
+        self.hostRefreshDays = 12
+
     def HostTooOld(self):
-        return not self.sqlManager.dataExists("dhosting_host_accounts", "WHERE TIMESTAMPADD(Day, 12, Created) > now() order By Created desc limit 1")
+        return not self.sqlManager.dataExists("dhosting_host_accounts", f"WHERE TIMESTAMPADD(Day, {self.hostRefreshDays}, Created) > now() order By Created desc limit 1")
 
     def RefreshHost(self):
         self.mailGenerator.DeleteEmailAccounts()
@@ -33,11 +37,11 @@ class Watcher:
                     if self.HostTooOld():
                         print("Host is too old, creating a new one!")
                         self.RefreshHost()
-                    elif emailAccounts < 10000:
+                    elif emailAccounts < self.emailAmmount:
                         hostName = self.mailGenerator.GetLatestHostAccount()[0]
                         hostPassword = self.mailGenerator.GetLatestHostAccount()[1]
                         dsid = self.mailGenerator.GetdsID(hostName, hostPassword)
-                        for i in range(10000 - emailAccounts):
+                        for i in range(self.emailAmmount - emailAccounts):
                             self.mailGenerator.CreateEmailAccount(hostName, dsid)
                             time.sleep(5)
                             print("Created Account.")

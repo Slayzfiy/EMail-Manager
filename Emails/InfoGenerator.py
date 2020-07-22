@@ -34,4 +34,4 @@ class InfoGenerator:
         return str(email)
 
     def GeneratePassword(self):
-        return "".join(random.choice(self.chars) for i in range(self.passwordLength - 1)) + "0"
+        return "".join(random.choice(self.chars) for i in range(self.passwordLength - 1)) + random.choice(string.digits)
