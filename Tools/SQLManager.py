@@ -2,8 +2,8 @@ import MySQLdb
 
 
 class MySQLManager:
-    def __init__(self, server, database, password, username):
-        self.connection = MySQLdb.connect(server, database, password, username)
+    def __init__(self, server, username, password, database):
+        self.connection = MySQLdb.connect(server, username, password, database)
         self.cursor = self.connection.cursor()
 
     def insertData(self, table, datafields, data):
