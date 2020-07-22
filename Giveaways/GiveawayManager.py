@@ -1,4 +1,4 @@
-from Emails.SQLManager import MySQLManager as sql
+from Tools.SQLManager import MySQLManager as sql
 
 
 class GivawayManager:

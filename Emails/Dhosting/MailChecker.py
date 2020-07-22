@@ -1,7 +1,6 @@
 import imaplib
 import email as e
-from email.header import decode_header
-from Emails.SQLManager import MySQLManager as sql
+from Tools.SQLManager import MySQLManager as sql
 
 
 class MailChecker:

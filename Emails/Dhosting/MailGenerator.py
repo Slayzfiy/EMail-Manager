@@ -1,6 +1,5 @@
-from Emails.InfoGenerator import InfoGenerator as ig
-from Emails.SQLManager import MySQLManager as sql
-from bs4 import BeautifulSoup
+from Tools.InfoGenerator import InfoGenerator as ig
+from Tools.SQLManager import MySQLManager as sql
 import requests
 import json
 import time
@@ -10,7 +9,7 @@ class MailGenerator:
     def __init__(self):
         self.suffix = "@dhosting.email"
         self.sqlManager = sql("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
-        self.ig = ig("firstnames.json", "lastnames.json", 5)
+        self.ig = ig("../../Files/firstnames.json", "../../Files/lastnames.json", 5)
 
     def CreateHostAccount(self):
         name = "1234567890"

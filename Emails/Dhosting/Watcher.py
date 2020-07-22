@@ -1,5 +1,5 @@
-from Emails.SQLManager import MySQLManager as sql
-from Emails.MailGenerator import MailGenerator as generator
+from Tools.SQLManager import MySQLManager as sql
+from Emails.Dhosting.MailGenerator import MailGenerator as generator
 import time
 
 

@@ -1,6 +1,5 @@
-from Emails.GiveawayManager import GivawayManager as gm
+from Giveaways.GiveawayManager import GivawayManager as gm
 
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -10,7 +9,7 @@ import time
 
 class Gleam:
     def __init__(self):
-        self.driver = webdriver.Chrome("chromedriver.exe")
+        self.driver = webdriver.Chrome("../Files/chromedriver.exe")
 
     def Start(self, email, url):
         try:
