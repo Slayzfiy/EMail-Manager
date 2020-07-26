@@ -4,12 +4,12 @@ from Tools.SQLManager import MySQLManager as sql
 class GivawayManager:
     def __init__(self):
         self.sqlManager = sql("web.hak-kitz.at", "m.beihammer", "MyDatabase047", "m.beihammer")
-
-    def GetMissingEmails(self, giveawayID):
-        return self.sqlManager.getData("dhosting_email_accounts", "Email", f"WHERE Email not in (select Email from dhosting_giveaway_entries where GiveawayID = {giveawayID})")
+        self.prefix = "py_"
+        self.giveawayTable = self.prefix + "Giveaways"
+        self.giveawayEntriesTable = self.prefix + "Giveaway_Entries"
 
     def GetOpenGiveaways(self):
-        return self.sqlManager.getData("dhosting_giveaways", "ID, URL", "where DrawDate > Now()")
+        return self.sqlManager.getData(self.giveawayTable, "ID, URL", "where DrawDate > Now()")
 
     def EnterEmailAccount(self, email, giveawayID):
-        self.sqlManager.insertData("dhosting_giveaway_entries", "(Email, GiveawayID)", [email, giveawayID])
+        self.sqlManager.insertData(self.giveawayEntriesTable, "(Email, GiveawayID)", [email, giveawayID])

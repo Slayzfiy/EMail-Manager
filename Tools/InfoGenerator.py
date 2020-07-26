@@ -4,11 +4,11 @@ import json
 
 
 class InfoGenerator:
-    def __init__(self, firstnamesPath, lastnamesPath, randomNumberLength):
-        self.firstnames = json.load(open(firstnamesPath, "r"))
-        self.lastnames = json.load(open(lastnamesPath, "r"))
+    def __init__(self):
+        self.firstnames = json.load(open("../Files/firstnames.json", "r"))
+        self.lastnames = json.load(open("../Files/lastnames.json", "r"))
         self.chars = string.digits + string.ascii_letters
-        self.randomNumberLength = randomNumberLength
+        self.randomNumberLength = 5
 
         self.format = "firstname.lastnamenumberemail"
         self.passwordLength = 15
@@ -25,13 +25,21 @@ class InfoGenerator:
     def GenerateRandomNumber(self):
         return "".join(random.choice(string.digits) for i in range(self.randomNumberLength))
 
-    def GenerateEmail(self, emailSuffix):
-        firstname = self.GenerateFirstname()
-        lastname = self.GenerateFirstname()
-        email = self.format.replace("firstname", str(firstname)).replace("lastname", str(lastname))
-        email = email.replace("number", self.GenerateRandomNumber())
-        email = email.replace("email", emailSuffix)
-        return str(email)
+    def GenerateEmail(self, type):
+        if type == "dhosting":
+            firstname = self.GenerateFirstname()
+            lastname = self.GenerateFirstname()
+            email = self.format.replace("firstname", str(firstname)).replace("lastname", str(lastname))
+            email = email.replace("number", self.GenerateRandomNumber())
+            email = email.replace("email", "@dhosting.com")
+            return str(email)
+        elif type == "testmail":
+            combination = self.GenerateCombination(5)
+            format = "ui38k.combination@inbox.testmail.app"
+            return format.replace("combination", combination)
+
+    def GenerateCombination(self, length):
+        return "".join(random.choice(self.chars) for i in range(length - 1)) + random.choice(string.digits)
 
     def GeneratePassword(self):
         return "".join(random.choice(self.chars) for i in range(self.passwordLength - 1)) + random.choice(string.digits)

@@ -15,17 +15,22 @@ class PostRequests:
         ref = "https://gleam.io/EDJt6/gewinnspiel-chromebooks-juli-2020"
         headers = {"Referer": ref}
 
-        post_infos = {"campaign_key": "EDJt6",
-                      "contestant": {
-                          "firstname": "fabio",
-                          "lastname": "kreis",
-                          "land": "Österreich",
-                          "hiermit_akzeptiere_ich_die_teilnahmebedingungen": "True",
-                          "email": "asdafasf123fjkl@gmail.com",
-                          "additional_details": "True"
-                      }}
+        post_infos = {
+            "campaign_key": "EDJt6",
+            "additional_details": "True",
+            "contestant": {
+                "firstname": "fabio",
+                "lastname": "kreis",
+                "land": "Österreich",
+                "hiermit_akzeptiere_ich_die_teilnahmebedingungen": "True",
+                "email": "asdafasf123ssdfjkl@gmail.com"
+            }
+        }
+        r = session.post("https://gleam.io/set-contestant", json=post_infos, headers=headers)
 
-        session.post("https://gleam.io/set-contestant", json=post_infos, headers=headers)
+        print("1.")
+        print(r.text + "\n")
+        print(str(r.cookies) + "\n")
 
         header = session.headers
         cookies = requests.utils.dict_from_cookiejar(session.cookies)
