@@ -1,6 +1,6 @@
 from Giveaways.GiveawayManager import GivawayManager
 from Tools.InfoGenerator import InfoGenerator
-from Tools.ProxyGenerator import ProxyGenerator
+from Tools.ProxyGenerator import *
 
 from selenium.webdriver.common.by import By
 from selenium import webdriver
@@ -14,7 +14,7 @@ class Gleam:
 
     def Setup(self, proxy):
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--proxy-server=' + proxy)
+        # chrome_options.add_argument('--proxy-server=' + proxy)
         if str(socket.gethostbyname(socket.gethostname())) == "192.168.8.182":
             self.driver = webdriver.Chrome(options=chrome_options)
         else:
@@ -25,7 +25,8 @@ class Gleam:
 
     def HandleElement(self, element, info):
         for fieldName in self.fieldNames:
-            if fieldName in str(element.get_attribute("ng-class")) or fieldName in str(element.get_attribute("ng-init")):
+            if fieldName in str(element.get_attribute("ng-class")) or fieldName in str(
+                    element.get_attribute("ng-init")):
                 inputField = element.find_element(By.XPATH, f".//*[@name='{fieldName}']")
                 if fieldName == self.fieldNames[0]:
                     inputField.send_keys(info[0])
@@ -67,35 +68,35 @@ class Gleam:
 
 
 if __name__ == "__main__":
-    while True:
-        try:
-            infoGenerator = InfoGenerator()
-            proxyGenerator = ProxyGenerator()
-            manager = GivawayManager()
+    proxyBroker = ProxyBroker()
+    proxyGenerator = SpyScraper()
+    proxyGenerator.
+    #proxies = proxyBroker.GetProxies(50)
 
-            giveaways = manager.GetOpenGiveaways()
-            if len(giveaways) > 0:
-                gleam = Gleam()
-                for giveaway in giveaways:
-                    url = giveaway[1]
-                    id = giveaway[0]
-                    counter = 1
-                    while True:
-                        print("Loading Proxies")
-                        for proxy in proxyGenerator.GetProxies(20):
-                            print("Using Proxy " + proxy)
-                            gleam.Setup(proxy)
+    infoGenerator = InfoGenerator()
+    manager = GivawayManager()
+    giveaways = manager.GetOpenGiveaways()
+    gleam = Gleam()
 
-                            for i in range(20):
-                                email = infoGenerator.GenerateEmail("testmail")
-                                firstname = infoGenerator.GenerateFirstname()
-                                lastname = infoGenerator.GenerateLastname()
-                                if gleam.Start(url, firstname, lastname, email):
-                                    print(f"{counter}, Entered {email}")
-                                    counter = counter + 1
-                                    manager.EnterEmailAccount(email, id)
-                                else:
-                                    break
-                            gleam.Destroy()
-        except:
-            pass
+    time.sleep(10000)
+
+    if len(giveaways) > 0:
+        for giveaway in giveaways:
+            url = giveaway[1]
+            id = giveaway[0]
+            counter = 1
+            for proxy in ["95.179.208.100:8080", "217.69.9.154:8080"]:
+            # for proxy in proxies:
+                print("Using Proxy " + proxy)
+                gleam.Setup("proxy")
+                for i in range(20):
+                    email = infoGenerator.GenerateEmail("testmail")
+                    firstname = infoGenerator.GenerateFirstname()
+                    lastname = infoGenerator.GenerateLastname()
+                    if gleam.Start(url, firstname, lastname, email):
+                        print(f"{counter}, Entered {email}")
+                        counter = counter + 1
+                        manager.EnterEmailAccount(email, id)
+                    else:
+                        break
+                gleam.Destroy()
