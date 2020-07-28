@@ -1,3 +1,6 @@
+from selenium.webdriver import Proxy
+from selenium.webdriver.common.proxy import ProxyType
+
 from Giveaways.GiveawayManager import GivawayManager
 from Tools.InfoGenerator import InfoGenerator
 from Tools.ProxyGenerator import *
@@ -14,11 +17,18 @@ class Gleam:
 
     def Setup(self, proxy):
         chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument('--proxy-server=' + proxy)
+        prox = Proxy()
+        prox.proxy_type = ProxyType.MANUAL
+        prox.http_proxy = proxy
+        prox.ssl_proxy = proxy
+
+        capabilities = webdriver.DesiredCapabilities.CHROME
+        prox.add_to_capabilities(capabilities)
+        #chrome_options.add_argument('--proxy-server=' + proxy)
         if str(socket.gethostbyname(socket.gethostname())) == "192.168.8.182":
-            self.driver = webdriver.Chrome(options=chrome_options)
+            self.driver = webdriver.Chrome(options=chrome_options, desired_capabilities=capabilities)
         else:
-            self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options)
+            self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options, desired_capabilities=capabilities)
 
     def Destroy(self):
         self.driver.close()
@@ -70,25 +80,26 @@ class Gleam:
 if __name__ == "__main__":
     proxyBroker = ProxyBroker()
     proxyGenerator = SpyScraper()
-    proxyGenerator.
+    proxies = proxyGenerator.GetProxies(500)
     #proxies = proxyBroker.GetProxies(50)
-
+    #print(*proxies, sep="\n")
     infoGenerator = InfoGenerator()
     manager = GivawayManager()
     giveaways = manager.GetOpenGiveaways()
     gleam = Gleam()
-
-    time.sleep(10000)
 
     if len(giveaways) > 0:
         for giveaway in giveaways:
             url = giveaway[1]
             id = giveaway[0]
             counter = 1
-            for proxy in ["95.179.208.100:8080", "217.69.9.154:8080"]:
-            # for proxy in proxies:
+            #for proxy in ["103.78.23.26:8080 "]:
+            for ip, port, latency, uptime in proxies:
+                proxy = ":".join([ip, port])
                 print("Using Proxy " + proxy)
-                gleam.Setup("proxy")
+                gleam.Setup(proxy)
+                gleam.driver.get("https://httpbin.org/ip")
+                time.sleep(100)
                 for i in range(20):
                     email = infoGenerator.GenerateEmail("testmail")
                     firstname = infoGenerator.GenerateFirstname()
