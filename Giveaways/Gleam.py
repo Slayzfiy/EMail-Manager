@@ -76,6 +76,7 @@ class Gleam:
 
 
 if __name__ == "__main__":
+    print("test")
     proxies = OwnProxies().GetProxies()
 
     infoGenerator = InfoGenerator()
@@ -84,20 +85,23 @@ if __name__ == "__main__":
     gleam = Gleam()
 
     if len(giveaways) > 0:
-        for giveaway in giveaways:
-            url = giveaway[1]
-            id = giveaway[0]
-            counter = 1
-            for proxy in proxies:
-                print("Using Proxy " + proxy)
-                gleam.Setup(proxy)
-                for i in range(21):
-                    info = [infoGenerator.GenerateFirstname(), infoGenerator.GenerateLastname(), infoGenerator.GenerateEmail("testmail")]
-                    if gleam.Start(url, info):
-                        print(f"{counter}, Entered {info[2]}")
-                        counter += 1
-                        manager.EnterEmailAccount(info[2], id)
-                    else:
-                        print("Proxy invalid or blocked")
-                        break
-                gleam.Destroy()
+        while True:
+            for giveaway in giveaways:
+                url = giveaway[1]
+                id = giveaway[0]
+                counter = 0
+                proxyCounter = 0
+                for proxy in proxies:
+                    proxyCounter += 1
+                    print(f"{proxyCounter}. Using Proxy {proxy}")
+                    gleam.Setup(proxy)
+                    for i in range(21):
+                        info = [infoGenerator.GenerateFirstname(), infoGenerator.GenerateLastname(), infoGenerator.GenerateEmail("testmail")]
+                        if gleam.Start(url, info):
+                            counter += 1
+                            print(f"{counter}. Entered {info[2]}")
+                            manager.EnterEmailAccount(info[2], id)
+                        else:
+                            print("Proxy invalid or blocked")
+                            break
+                    gleam.Destroy()
