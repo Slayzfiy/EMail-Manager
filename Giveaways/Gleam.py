@@ -1,6 +1,3 @@
-from selenium.webdriver import Proxy
-from selenium.webdriver.common.proxy import ProxyType
-
 from Giveaways.GiveawayManager import GivawayManager
 from Tools.InfoGenerator import InfoGenerator
 from Tools.ProxyGenerator import *
@@ -14,21 +11,17 @@ import socket
 class Gleam:
     def __init__(self):
         self.fieldNames = ["firstname", "lastname", "email", "land", "hiermit_akzeptiere_ich_die_teilnahmebedingungen"]
+        self.driver = None
 
     def Setup(self, proxy):
         chrome_options = webdriver.ChromeOptions()
-        prox = Proxy()
-        prox.proxy_type = ProxyType.MANUAL
-        prox.http_proxy = proxy
-        prox.ssl_proxy = proxy
+        chrome_options.add_argument('--proxy-server=' + proxy)
+        chrome_options.add_argument("--headless")
 
-        capabilities = webdriver.DesiredCapabilities.CHROME
-        prox.add_to_capabilities(capabilities)
-        #chrome_options.add_argument('--proxy-server=' + proxy)
         if str(socket.gethostbyname(socket.gethostname())) == "192.168.8.182":
-            self.driver = webdriver.Chrome(options=chrome_options, desired_capabilities=capabilities)
+            self.driver = webdriver.Chrome(options=chrome_options)
         else:
-            self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options, desired_capabilities=capabilities)
+            self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options)
 
     def Destroy(self):
         self.driver.close()
@@ -49,9 +42,8 @@ class Gleam:
                 elif fieldName == self.fieldNames[4]:
                     element.find_element(By.XPATH, ".//label[@class='checkbox']").click()
 
-    def Start(self, url, firstname, lastname, email):
+    def Start(self, url, info):
         try:
-            info = [firstname, lastname, email]
             self.driver.delete_all_cookies()
             self.driver.get(url)
 
@@ -63,26 +55,29 @@ class Gleam:
                         elements = container.find_elements(By.XPATH, "./div")
                         for element in elements:
                             self.HandleElement(element, info)
+
+                        # Click on Submit
                         time.sleep(1)
                         self.driver.find_elements(By.XPATH, "//button[@ng-click='setContestant()']")[0].click()
-                        for i in range(60):
-                            element = self.driver.find_element_by_class_name("tally")
-                            if "Deine Teilnahme am Gewinnspiel ist bestätigt" in element.get_attribute("uib-tooltip"):
+
+                        # Wait for Response
+                        element = self.driver.find_element_by_class_name("tally")
+                        for i in range(40):
+                            status = element.get_attribute("uib-tooltip")
+                            if "Deine Teilnahme am Gewinnspiel ist bestätigt" in status:
                                 return True
+                            elif "Du erstellst zu viele Einträge." in status:
+                                return False
                             time.sleep(0.1)
-                        return False
                 time.sleep(0.5)
-        except Exception as ex:
-            print(str(ex))
+            return False
+        except:
             return False
 
 
 if __name__ == "__main__":
-    proxyBroker = ProxyBroker()
-    proxyGenerator = SpyScraper()
-    proxies = proxyGenerator.GetProxies(500)
-    #proxies = proxyBroker.GetProxies(50)
-    #print(*proxies, sep="\n")
+    proxies = OwnProxies().GetProxies()
+
     infoGenerator = InfoGenerator()
     manager = GivawayManager()
     giveaways = manager.GetOpenGiveaways()
@@ -93,21 +88,16 @@ if __name__ == "__main__":
             url = giveaway[1]
             id = giveaway[0]
             counter = 1
-            #for proxy in ["103.78.23.26:8080 "]:
-            for ip, port, latency, uptime in proxies:
-                proxy = ":".join([ip, port])
+            for proxy in proxies:
                 print("Using Proxy " + proxy)
                 gleam.Setup(proxy)
-                gleam.driver.get("https://httpbin.org/ip")
-                time.sleep(100)
-                for i in range(20):
-                    email = infoGenerator.GenerateEmail("testmail")
-                    firstname = infoGenerator.GenerateFirstname()
-                    lastname = infoGenerator.GenerateLastname()
-                    if gleam.Start(url, firstname, lastname, email):
-                        print(f"{counter}, Entered {email}")
-                        counter = counter + 1
-                        manager.EnterEmailAccount(email, id)
+                for i in range(21):
+                    info = [infoGenerator.GenerateFirstname(), infoGenerator.GenerateLastname(), infoGenerator.GenerateEmail("testmail")]
+                    if gleam.Start(url, info):
+                        print(f"{counter}, Entered {info[2]}")
+                        counter += 1
+                        manager.EnterEmailAccount(info[2], id)
                     else:
+                        print("Proxy invalid or blocked")
                         break
                 gleam.Destroy()
