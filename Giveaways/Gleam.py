@@ -76,7 +76,6 @@ class Gleam:
 
 
 if __name__ == "__main__":
-    print("test")
     proxies = OwnProxies().GetProxies()
 
     infoGenerator = InfoGenerator()
