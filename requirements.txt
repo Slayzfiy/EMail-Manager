@@ -1,0 +1,5 @@
+mysqlclient
+selenium
+requests
+bs4
+proxybroker
