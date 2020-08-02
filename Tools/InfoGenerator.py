@@ -34,7 +34,7 @@ class InfoGenerator:
             email = email.replace("email", "@dhosting.com")
             return str(email)
         elif type == "testmail":
-            combination = self.GenerateCombination(5)
+            combination = self.GenerateCombination(10)
             format = "ui38k.combination@inbox.testmail.app"
             return format.replace("combination", combination)
 

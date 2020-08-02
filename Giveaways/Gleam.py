@@ -18,7 +18,7 @@ class Gleam:
         chrome_options.add_argument('--proxy-server=' + proxy)
         chrome_options.add_argument("--headless")
 
-        if str(socket.gethostbyname(socket.gethostname())) == "192.168.8.182":
+        if "127" in str(socket.gethostbyname(socket.gethostname())):
             self.driver = webdriver.Chrome(options=chrome_options)
         else:
             self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options)

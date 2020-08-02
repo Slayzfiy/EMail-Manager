@@ -129,6 +129,21 @@ class SpyScraper:
         return proxies[:ammount]
 
 
+class ProxyScraper:
+    def __init__(self):
+        pass
+
+    def GetProxies(self, count):
+        r = requests.get("https://api.proxyscrape.com/?request=getproxies&proxytype=http&timeout=200&country=all&ssl=all&anonymity=all").text
+        proxylist = []
+        for x in r.splitlines():
+            proxylist.append(x)
+        if len(proxylist) > count:
+            return proxylist[:count]
+        else:
+            return proxylist
+
+
 class OwnProxies:
     def __init__(self):
         self.proxies = json.load(open("../Files/proxies.json", "r"))
