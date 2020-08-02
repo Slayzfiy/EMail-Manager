@@ -13,3 +13,6 @@ class GivawayManager:
 
     def EnterEmailAccount(self, email, giveawayID):
         self.sqlManager.insertData(self.giveawayEntriesTable, "(Email, GiveawayID)", [email, giveawayID])
+
+    def RegisterGiveaway(self, product, url, date):
+        self.sqlManager.insertData(self.giveawayTable, "(Product, URL, DrawDate)", [product, url, date])
