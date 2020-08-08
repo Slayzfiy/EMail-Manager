@@ -45,4 +45,3 @@ class PostRequests:
 if __name__ == "__main__":
     i = PostRequests()
     i.Post()
-    input()

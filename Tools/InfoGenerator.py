@@ -20,7 +20,7 @@ class InfoGenerator:
         return str(self.firstnames[random.randint(0, len(self.firstnames) - 1)])
 
     def GenerateLastname(self):
-        return str(self.lastnames[random.randint(0, len(self.lastnames) - 1)])
+        return str(self.lastnames[random.randint(0, len(self.lastnames) - 1)]).capitalize()
 
     def GenerateRandomNumber(self):
         return "".join(random.choice(string.digits) for i in range(self.randomNumberLength))
@@ -43,3 +43,9 @@ class InfoGenerator:
 
     def GeneratePassword(self):
         return "".join(random.choice(self.chars) for i in range(self.passwordLength - 1)) + random.choice(string.digits)
+
+    def GenerateBirthday(self):
+        date = random.randint(1, 28)
+        month = random.randint(1, 12)
+        year = random.randint(1960, 2000)
+        return '{}.{}.{}'.format(date, month, year)
