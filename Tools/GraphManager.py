@@ -101,6 +101,11 @@ class Confirm_links:
         a = Query()
         for x in a.extract_confirmation_link(
                 a.email_filtering(email_field='subject', email_filter='Deine Anmeldung zum MEDION-Newsletter')):
+            print(x)
+
+            input()
+
+
             another_reg = 'http://.*?(?=">here)'
             html = requests.get(x).text
             link = re.findall(another_reg, html)

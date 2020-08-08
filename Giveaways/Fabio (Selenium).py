@@ -16,7 +16,7 @@ from datetime import datetime
 class Medion:
     def __init__(self):
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("--headless")
+
         self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options)
 
     def Start(self):
@@ -62,6 +62,8 @@ class Medion:
                 # upload to sql
                 self.Upload_Data_To_SQL(email, first_name, last_name, birthday)
                 print('subscribed with:', email)
+
+                time.sleep(2)
 
             except Exception:
                 print(traceback.format_exc())
