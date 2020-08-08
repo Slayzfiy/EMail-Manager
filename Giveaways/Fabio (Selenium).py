@@ -1,11 +1,6 @@
-import logging
 import re
 import traceback
-
 import requests
-
-from Giveaways.GiveawayManager import GivawayManager as gm
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
@@ -13,6 +8,9 @@ from selenium.webdriver.support.ui import Select
 from selenium import webdriver
 import time
 from Tools.InfoGenerator import InfoGenerator
+from Tools.GraphManager import Query
+from Tools.Fabio_SQLManager import SQLManager
+from datetime import datetime
 
 
 class Medion:
@@ -20,44 +18,6 @@ class Medion:
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")
         self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options)
-
-    # def Start(self, email, url):
-    #     try:
-    #         post_infos = {
-    #             "origin": "gw_leadgen_DE_MEDION_0720_ inscopenico",
-    #             "salutation": "mr",
-    #             "firstname": "fasdf",
-    #             "lastname": "asfsdfasdfasdf",
-    #             "email": email,
-    #             "birthday": "05.06.2002",
-    #             "honeypot": "mr"
-    #         }
-    #         mail = email.replace("@", "%40")
-    #         session = requests.Session()
-    #         my_referer = "https://www.medion.com/de/shop/newsletter-registration-inscopenico?email=%s" % mail
-    #         print(my_referer)
-    #         session.headers.update({'referer': my_referer})
-    #
-    #         r = session.get("https://www.medion.com/de/shop/newsletter-registration-inscopenico?email=%s" % mail)
-    #         header = r.headers
-    #         cookie = r.cookies
-    #         print("1.", header, cookie)
-    #
-    #         r = session.post("https://www.medion.com/de/shop/newsletter/subscribe", params=post_infos, headers=header,
-    #                          cookies=cookie)
-    #         cookies = r.cookies
-    #         header = r.headers
-    #         print("2.", header, cookie)
-    #
-    #         x = requests.get('https://www.medion.com/de/shop/newsletter-success', cookies=cookies, headers=header)
-    #
-    #         print(x.cookies)
-    #
-    #         print("joined with: ", email)
-    #
-    #     except Exception as ex:
-    #         print("Crashed because of " + str(ex))
-    #         return False
 
     def Start(self):
         while True:
@@ -98,27 +58,20 @@ class Medion:
                 self.driver.execute_script("document.getElementsByClassName('btn btn--primary btn--block "
                                            "js-nl-submit-btn')[0].click();")
 
-                for x in range(5):
-                    if self.driver.current_url == 'https://www.medion.com/de/shop/newsletter-success':
-                        print('subscribed with:', email)
-                        break
-                    else:
-                        time.sleep(1)
-                else:
-                    print("didn't subscribe with email:", email)
+
+                # upload to sql
+                self.Upload_Data_To_SQL(email, first_name, last_name, birthday)
+                print('subscribed with:', email)
 
             except Exception:
                 print(traceback.format_exc())
 
-    def Confirm_Newsletter(self):
-        test_mail_url = 'https://api.testmail.app/api/json?apikey=25ad9e51-ce4d-4bcb-b15f-b8dbd2779ca0&namespace=ui38k&pretty=true'
-        confirmation_reg = 'https:\\/\\/link.newsletter.medion.com\\/u\\/nrd.*?(?= target)'
-
-        emails_html = requests.get(test_mail_url).text
-
-        codes = re.findall(confirmation_reg, emails_html)
-        print(any(codes.count(x) > 1 for x in codes))
-        print(codes)
+    def Upload_Data_To_SQL(self, email, firstname, lastname, birthday):
+        sql = SQLManager("web.hak-kitz.at", "fabio.kreisern", "MyDatabase056", "fabio.kreisern_")
+        cmd = "INSERT INTO MedionAccountsInfos (firstname, lastname, sex, birthday, email) VALUES" \
+              "('%s', '%s','Mr','%s', '%s')" % (firstname, lastname, birthday, email)
+        print(cmd)
+        sql.Execute_Cmd(cmd)
 
 
 def Clear(self):
@@ -131,5 +84,6 @@ def Clear(self):
 
 if __name__ == "__main__":
     bot = Medion()
-    # bot.Start()
-    bot.Confirm_Newsletter()
+    bot.Start()
+
+

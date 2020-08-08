@@ -1,3 +1,4 @@
+graphene
 mysqlclient
 selenium
 requests
