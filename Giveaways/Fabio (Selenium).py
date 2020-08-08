@@ -8,9 +8,8 @@ from selenium.webdriver.support.ui import Select
 from selenium import webdriver
 import time
 from Tools.InfoGenerator import InfoGenerator
-from Tools.GraphManager import Query
 from Tools.Fabio_SQLManager import SQLManager
-from datetime import datetime
+from Tools.MedionNewsletterConfirmator import Query
 
 
 class Medion:
@@ -20,6 +19,7 @@ class Medion:
         self.driver = webdriver.Chrome("../Files/chromedriver.exe", options=chrome_options)
 
     def Start(self):
+        counter = 0
         while True:
             try:
                 info = InfoGenerator()
@@ -58,12 +58,18 @@ class Medion:
                 self.driver.execute_script("document.getElementsByClassName('btn btn--primary btn--block "
                                            "js-nl-submit-btn')[0].click();")
 
+                time.sleep(4)
 
                 # upload to sql
                 self.Upload_Data_To_SQL(email, first_name, last_name, birthday)
-                print('subscribed with:', email)
-
+                print(counter, 'subscribed with:', email)
                 time.sleep(2)
+                counter += 1
+
+                if counter > 30:
+                    time.sleep(30)
+                    confirmer = Query()
+                    confirmer.Confirm()
 
             except Exception:
                 print(traceback.format_exc())
@@ -76,16 +82,17 @@ class Medion:
         sql.Execute_Cmd(cmd)
 
 
-def Clear(self):
-    self.driver.delete_all_cookies()
-    if len(self.driver.window_handles) > 1:
-        self.driver.switch_to.window(self.driver.window_handles[1])
-        self.driver.close()
-        self.driver.switch_to.window(self.driver.window_handles[0])
+    def Clear(self):
+        self.driver.delete_all_cookies()
+        if len(self.driver.window_handles) > 1:
+            self.driver.switch_to.window(self.driver.window_handles[1])
+            self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[0])
 
 
 if __name__ == "__main__":
     bot = Medion()
     bot.Start()
+
 
 

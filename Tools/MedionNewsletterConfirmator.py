@@ -1,5 +1,7 @@
 import json
 import re
+import time
+
 import graphene
 import requests
 
@@ -43,10 +45,20 @@ class Query(graphene.ObjectType):
         return self.run_query(query)
 
     def email_filtering(self, email_field, email_filter):
+        """
+        Scheme Details: Tools/emailscheme.json
+        scheiß michi
+
+        :param email_field: sorting field
+        :param email_filter:
+        :return:
+        """
+
         query = """
         {
-          inbox (
+          inbox(
             namespace:"ui38k"
+            limit: 50
             advanced_filters : 
             [
                 {
@@ -65,6 +77,7 @@ class Query(graphene.ObjectType):
           }
         }
         """ % (email_field, email_filter)
+
 
         return self.run_query(query)
 
@@ -87,34 +100,25 @@ class Query(graphene.ObjectType):
         c = b.get('emails')
         d = [x for x in c]
 
-        for x in d:
-            confirmation_reg = 'https:\\/\\/link.newsletter.medion.com\\/u\\/nrd.*?(?=" target="_blank" class="cta1a")'
-            text = re.findall(confirmation_reg, x.get('html'))
-            return text
-
-
-class Confirm_links:
-    def __init__(self):
-        pass
+        confirmation_reg = 'https:\\/\\/link.newsletter.medion.com\\/u\\/nrd.*?(?=" target="_blank" class="cta1a")'
+        links = [re.findall(confirmation_reg, x.get('html')) for x in d]
+        print('emails to confirm:', len(links))
+        return links
 
     def Confirm(self):
-        a = Query()
-        for x in a.extract_confirmation_link(
-                a.email_filtering(email_field='subject', email_filter='Deine Anmeldung zum MEDION-Newsletter')):
-            print(x)
+        for x in self.extract_confirmation_link(
+                self.email_filtering(email_field='subject', email_filter='Deine Anmeldung zum MEDION-Newsletter')):
+            try:
+                another_reg = 'http://.*?(?=">here)'
+                html = requests.get(*x).text
+                link = re.findall(another_reg, html)
+                redirect_link = str(link[0]).replace('&amp;', '&')
+                confirm_page = requests.get(redirect_link)
+                print(x, 'confirmed')
 
-            input()
-
-
-            another_reg = 'http://.*?(?=">here)'
-            html = requests.get(x).text
-            link = re.findall(another_reg, html)
-            redirect_link = str(link[0]).replace('&amp;', '&')
-
-            confirm_page = requests.get(redirect_link)
-            print(confirm_page.text)
+            except Exception as ex:
+                print(x, 'threw:', ex)
 
 
-if __name__ == "__main__":
-    c = Confirm_links()
-    c.Confirm()
+
+
