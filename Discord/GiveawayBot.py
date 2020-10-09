@@ -6,7 +6,7 @@ import discord
 
 class DiscordBot:
     def __init__(self):
-        self.token = 'NzM5NTY5MDEwMjI3NTQ0MTU1.XycXUA.Lt27Rnu-K-G2UMVO1RnIiGvW9vc'
+        self.token = 'NzM5NTY5MDEwMjI3NTQ0MTU1.XycXUA.jgCnQERZ9_7o0drJmrlKHqEBiGw'
         self.giveawayManager = GivawayManager()
         self.giveawayChannel = "giveaways"
 
