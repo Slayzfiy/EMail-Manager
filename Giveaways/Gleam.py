@@ -16,7 +16,7 @@ class Gleam:
     def Setup(self, proxy):
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--proxy-server=' + proxy)
-        chrome_options.add_argument("--headless")
+        #chrome_options.add_argument("--headless")
 
         if "127" in str(socket.gethostbyname(socket.gethostname())):
             self.driver = webdriver.Chrome(options=chrome_options)
@@ -46,6 +46,11 @@ class Gleam:
         try:
             self.driver.delete_all_cookies()
             self.driver.get(url)
+            time.sleep(1)
+
+            entryMethods = self.driver.find_elements(By.XPATH, "//div[contains(@class, 'entry-method')]")
+            if len(entryMethods) > 0:
+                entryMethods[0].click()
 
             for j in range(10):
                 fieldsets = self.driver.find_elements(By.XPATH, "//fieldset[@class='inputs']")
@@ -57,8 +62,13 @@ class Gleam:
                             self.HandleElement(element, info)
 
                         # Click on Submit
-                        time.sleep(1)
-                        self.driver.find_elements(By.XPATH, "//button[@ng-click='setContestant()']")[0].click()
+                        for element in self.driver.find_elements(By.XPATH, "//button[@ng-click='setContestant()']"):
+                            try:
+                                element.click()
+                            except:
+                                pass
+
+                        time.sleep(1000)
 
                         # Wait for Response
                         element = self.driver.find_element_by_class_name("tally")
@@ -88,6 +98,7 @@ if __name__ == "__main__":
             for giveaway in giveaways:
                 url = giveaway[1]
                 id = giveaway[0]
+                print("Creating Bots for GiveawayID " + str(id))
                 counter = 0
                 proxyCounter = 0
                 for proxy in proxies:

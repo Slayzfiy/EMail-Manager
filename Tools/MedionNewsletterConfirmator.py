@@ -58,7 +58,7 @@ class Query(graphene.ObjectType):
         {
           inbox(
             namespace:"ui38k"
-            limit: 50
+            limit: 5000
             advanced_filters : 
             [
                 {
@@ -77,7 +77,6 @@ class Query(graphene.ObjectType):
           }
         }
         """ % (email_field, email_filter)
-
 
         return self.run_query(query)
 

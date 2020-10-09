@@ -33,3 +33,8 @@ class MySQLManager:
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"delete from {table} {condition}")
         self.connection.commit()
+
+    def customGetCommand(self, command):
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(command)
+        return self.cursor.fetchall()

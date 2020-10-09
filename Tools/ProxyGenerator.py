@@ -4,6 +4,7 @@ import asyncio
 from bs4 import BeautifulSoup
 import requests
 import json
+import os
 
 
 class ProxyBroker:
@@ -146,7 +147,7 @@ class ProxyScraper:
 
 class OwnProxies:
     def __init__(self):
-        self.proxies = json.load(open("../Files/proxies.json", "r"))
+        self.proxies = json.load(open(os.path.dirname(os.path.realpath(__file__)).strip("Tools") + "/Files/proxies.json", "r"))
 
     def GetProxies(self):
         return list(map(lambda proxy: ":".join([proxy["address"], str(proxy["port"])]), self.proxies["shared_proxy"]))
