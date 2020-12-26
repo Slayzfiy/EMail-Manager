@@ -1,20 +1,20 @@
 import random
 import string
 import json
-import os
 
 
 class InfoGenerator:
-    def __init__(self):
-        self.firstnames = json.load(open(os.path.dirname(os.path.realpath(__file__)).strip("Tools") + "/Files/firstnames.json", "r"))
-        self.lastnames = json.load(open(os.path.dirname(os.path.realpath(__file__)).strip("Tools") + "/Files/lastnames.json", "r"))
+    def __init__(self, firstnamesPath, lastnamesPath, randomNumberLength):
+        self.firstnames = json.load(open(firstnamesPath, "r"))
+        self.lastnames = json.load(open(lastnamesPath, "r"))
         self.chars = string.digits + string.ascii_letters
-        self.randomNumberLength = 5
+        self.randomNumberLength = randomNumberLength
 
-        self.emailFormat = '{0}.{1}{2}{3}'
-        self.testmailFormat = 'ui38k.{0}@inbox.testmail.app'
-        self.birthdayFormat = '{}.{}.{}'
+        self.format = "firstname.lastnamenumberemail"
         self.passwordLength = 15
+
+    def SetCustomEmailFormat(self, format):
+        self.format = format
 
     def GenerateFirstname(self):
         return str(self.firstnames[random.randint(0, len(self.firstnames) - 1)]).capitalize()
@@ -22,28 +22,32 @@ class InfoGenerator:
     def GenerateLastname(self):
         return str(self.lastnames[random.randint(0, len(self.lastnames) - 1)]).capitalize()
 
+    def GenerateUsername(self):
+        chars = string.ascii_letters + string.digits
+        username = "".join([random.choice(chars) for i in range(15)])
+        return username
+
     def GenerateRandomNumber(self):
         return "".join(random.choice(string.digits) for i in range(self.randomNumberLength))
 
-    def GenerateCombination(self, length):
-        return "".join(random.choice(self.chars) for i in range(length - 1)) + random.choice(string.digits)
+    def GenerateEmail(self, emailSuffix):
+        firstname = self.GenerateFirstname()
+        lastname = self.GenerateFirstname()
+        email = self.format.replace("firstname", str(firstname)).replace("lastname", str(lastname))
+        email = email.replace("number", self.GenerateRandomNumber())
+        email = email.replace("email", emailSuffix)
+        return str(email)
 
     def GeneratePassword(self):
         return "".join(random.choice(self.chars) for i in range(self.passwordLength - 1)) + random.choice(string.digits)
 
-    def GenerateBirthday(self):
-        date = random.randint(1, 28)
-        month = random.randint(1, 12)
-        year = random.randint(1960, 2000)
-        return self.birthdayFormat.format(date, month, year)
+    @staticmethod
+    def GenerateTestmail():
+        return "".join([random.choice(string.ascii_letters) for i in range(10)])
 
-    def GenerateEmail(self, type):
-        firstname = self.GenerateFirstname()
-        lastname = self.GenerateLastname()
-        number = self.GenerateRandomNumber()
-        if type == "dhosting":
-            return str(self.emailFormat.format(firstname, lastname, number, "@dhosting.com"))
-        elif type == "testmail":
-            return str(self.testmailFormat.format(self.GenerateCombination(10)))
-        elif type == "protonmail":
-            return str(self.emailFormat.format(firstname, lastname, number, ""))
+    @staticmethod
+    def GenerateBirthdate(format):
+        day = random.randint(1, 27)
+        month = random.randint(1, 12)
+        year = random.randint(1980, 2000)
+        return str(format).replace("d", str(day)).replace("m", str(month)).replace("y", str(year))
