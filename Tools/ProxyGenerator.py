@@ -4,6 +4,7 @@ import asyncio
 from bs4 import BeautifulSoup
 import requests
 import json
+import ast
 import os
 
 
@@ -151,3 +152,28 @@ class OwnProxies:
 
     def GetProxies(self):
         return list(map(lambda proxy: ":".join([proxy["address"], str(proxy["port"])]), self.proxies["shared_proxy"]))
+
+
+class Webshare:
+    def __init__(self):
+        self.headers = {"Authorization": "Token dddb42fb7aabc20110e7b4f9e8f19282abfc413a"}
+
+    def WhitelistIP(self):
+        ip = json.loads(requests.get("https://httpbin.org/ip").text)["origin"]
+        requests.post("https://proxy.webshare.io/api/proxy/config/", headers=self.headers, json={
+            "authorized_ips": [ip]
+        })
+
+    def GetProxies(self):
+        self.WhitelistIP()
+
+        proxies = []
+        response = requests.get("https://proxy.webshare.io/api/proxy/list", headers=self.headers)
+
+        jsonObject = ast.literal_eval(str(response.json()))
+        for proxy in jsonObject["results"]:
+            proxies.append([proxy["proxy_address"], proxy["ports"]["http"]])
+        return proxies
+
+
+
